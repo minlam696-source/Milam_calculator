@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milam Finance Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #c8f542;
+    --accent2: #7ef0c0;
+    --text: #f0f0f0;
+    --muted: #6b6b80;
+    --danger: #ff6b6b;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200,245,66,0.06) 0%, transparent 70%);
+    top: -200px; right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow2 {
+    position: fixed;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(126,240,192,0.05) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    margin-bottom: 52px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform: scale(1); }
+    50% { opacity:0.4; transform: scale(1.5); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Layout */
+  .grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Input panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    position: sticky;
+    top: 24px;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+  .prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,245,66,0.08);
+  }
+  .has-prefix input { padding-left: 30px; }
+  .has-suffix input { padding-right: 44px; }
+
+  .calc-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px;
+    background: var(--accent);
+    color: #0a0a0f;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+  }
+  .calc-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(200,245,66,0.25);
+  }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* Results */
+  .results { display: flex; flex-direction: column; gap: 20px; }
+
+  .result-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .result-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .section-header {
+    padding: 16px 24px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-header .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Comparison table */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .comp-table th {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 14px 20px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-table th:first-child { text-align: left; }
+  .comp-table th.milam-col { color: var(--accent); }
+
+  .comp-table td {
+    padding: 13px 20px;
+    font-size: 14px;
+    text-align: right;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+  }
+  .comp-table td:first-child {
+    text-align: left;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .milam-val { color: var(--accent2); font-weight: 500; }
+  .badge-higher {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(255,107,107,0.12);
+    color: var(--danger);
+    margin-left: 6px;
+    letter-spacing: 0.05em;
+  }
+  .badge-lower {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(126,240,192,0.1);
+    color: var(--accent2);
+    margin-left: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Milam payout cards */
+  .payout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .payout-card {
+    padding: 28px 24px;
+    border-right: 1px solid var(--border);
+  }
+  .payout-card:last-child { border-right: none; }
+  .payout-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .payout-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .payout-value.accent { color: var(--accent); }
+  .payout-value.accent2 { color: var(--accent2); }
+  .payout-sub {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Summary inputs */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .summary-item {
+    padding: 18px 24px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-item:nth-child(2n) { border-right: none; }
+  .summary-item:nth-last-child(-n+2) { border-bottom: none; }
+  .summary-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .summary-val {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .empty-state {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+
+  @media (max-width: 600px) {
+    .payout-grid { grid-template-columns: 1fr; }
+    .payout-card { border-right: none; border-bottom: 1px solid var(--border); }
+    .payout-card:last-child { border-bottom: none; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .summary-item { border-right: none; }
+    .summary-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--border); }
+    .summary-item:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="wrapper">
+  <header>
+    <div class="logo">Milam Finance</div>
+    <h1>Loan <span>Calculator</span></h1>
+    <p class="subtitle">GFV · Standard · Milam Soft End — side by side</p>
+  </header>
+
+  <div class="grid">
+    <!-- Inputs -->
+    <div class="panel">
+      <div class="panel-title">Loan Parameters</div>
+
+      <div class="field">
+        <label>Car Price (dealer shown)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="carPrice" value="78678" min="0" step="100" oninput="liveUpdate()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Total Price After Add-ons</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="totalPrice" value="78678" min="0" step="100" oninput="liveUpdate()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Deposit</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="deposit" value="0" min="0" step="100" oninput="liveUpdate()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Annual Interest Rate</label>
+        <div class="input-wrap has-suffix">
+          <input type="number" id="rate" value="10" min="0" max="50" step="0.1" oninput="liveUpdate()">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Loan Term</label>
+        <div class="input-wrap has-suffix">
+          <input type="number" id="term" value="5" min="1" max="10" step="1" oninput="liveUpdate()">
+          <span class="suffix">yrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>GFV Residual Rate</label>
+        <div class="input-wrap has-suffix">
+          <input type="number" id="gfvRate" value="37" min="0" max="80" step="1" oninput="liveUpdate()">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+
+      <!-- Derived display — not an input -->
+      <div class="field">
+        <label>Milam Balloon (auto — 10% of car price)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="milamBalloonDisplay" value="7867.80" step="0.01" style="opacity:0.5;cursor:not-allowed;" readonly>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calculate()">Calculate →</button>
+    </div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+      <div class="empty-state">
+        <div class="empty-icon">◎</div>
+        Enter your loan parameters and hit Calculate
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function fmt(n) {
+  return '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtN(n) {
+  return n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function liveUpdate() {
+  const carPrice = parseFloat(document.getElementById('carPrice').value) || 0;
+  document.getElementById('milamBalloonDisplay').value = (carPrice * 0.10).toFixed(2);
+  calculate();
+}
+
+function calculate() {
+  const carPrice   = parseFloat(document.getElementById('carPrice').value)   || 0;
+  const totalPrice = parseFloat(document.getElementById('totalPrice').value) || carPrice;
+  const deposit    = parseFloat(document.getElementById('deposit').value)    || 0;
+  const annualRate = parseFloat(document.getElementById('rate').value)       || 0;
+  const termYears  = parseFloat(document.getElementById('term').value)       || 5;
+  const gfvPct     = parseFloat(document.getElementById('gfvRate').value)    || 37;
+
+  // Derived
+  const milamBalloon = carPrice * 0.10;
+  const loanAmount   = totalPrice - deposit;
+  const weeklyRate = annualRate / 100 / 52;
+  const totalWeeks = termYears * 52;
+
+  // GFV (balloon = gfvPct% of car price)
+  const gfv = carPrice * (gfvPct / 100);
+
+  // ── GFV Loan: weekly repayment on (loanAmount - PV of GFV balloon) ──
+  // Standard annuity + balloon PV
+  // PMT for loan with balloon: PMT = (PV - BalloonPV) * r / (1 - (1+r)^-n)
+  // where BalloonPV = GFV / (1+r)^n
+  const gfvPV = gfv / Math.pow(1 + weeklyRate, totalWeeks);
+  let gfvWeekly;
+  if (weeklyRate === 0) {
+    gfvWeekly = (loanAmount - gfvPV) / totalWeeks;
+  } else {
+    gfvWeekly = (loanAmount - gfvPV) * weeklyRate / (1 - Math.pow(1 + weeklyRate, -totalWeeks));
+  }
+  const gfvTotalWeekly = gfvWeekly * totalWeeks;
+  const gfvTotalPaid   = gfvTotalWeekly + gfv;
+
+  // ── Standard Loan: no balloon ──
+  let stdWeekly;
+  if (weeklyRate === 0) {
+    stdWeekly = loanAmount / totalWeeks;
+  } else {
+    stdWeekly = loanAmount * weeklyRate / (1 - Math.pow(1 + weeklyRate, -totalWeeks));
+  }
+  const stdTotalWeekly = stdWeekly * totalWeeks;
+  const stdTotalPaid   = stdTotalWeekly; // no balloon
+
+  // ── Milam Soft End Loan ──
+  // Balloon = milamBalloon
+  const milamBalloonPV = milamBalloon / Math.pow(1 + weeklyRate, totalWeeks);
+  let milamWeekly;
+  if (weeklyRate === 0) {
+    milamWeekly = (loanAmount - milamBalloonPV) / totalWeeks;
+  } else {
+    milamWeekly = (loanAmount - milamBalloonPV) * weeklyRate / (1 - Math.pow(1 + weeklyRate, -totalWeeks));
+  }
+  const milamTotalWeekly = milamWeekly * totalWeeks;
+  const milamTotalPaid   = milamTotalWeekly + milamBalloon;
+
+  // ── Comparisons vs Standard ──
+  const gfvHigher   = gfvTotalPaid   - stdTotalPaid;
+  const milamHigher = milamTotalPaid - stdTotalPaid;
+
+  // Milam Equity Payout = (GFV balloon - Milam balloon) + (Milam total paid - Standard total paid)
+  // The premium paid vs standard is returned as equity, customer walks away with this
+  const milamEquityPayout = (gfv - milamBalloon) + (milamTotalPaid - stdTotalPaid);
+  const milamGFV = milamEquityPayout + milamBalloon;
+
+  // Two scenarios:
+  // A) Customer hands car back: paid weeklies only, gets equity payout, walks away
+  const milamHandBackNet = milamTotalWeekly - milamEquityPayout;
+  // B) Customer keeps car: paid weeklies + balloon, owns car worth GFV
+  const milamKeepCarNet = milamTotalPaid - gfv;
+  // Standard loan equivalent net cost (paid total, owns car worth GFV)
+  const stdNetCost = stdTotalPaid - gfv;
+  // The premium customer pays for optionality (vs standard loan equivalent)
+  const milamPremium = milamKeepCarNet - stdNetCost;
+
+  // Render
+  const results = document.getElementById('results');
+  results.innerHTML = `
+    <!-- Summary -->
+    <div class="result-section" id="sec1">
+      <div class="section-header"><span class="dot"></span><h2>Loan Summary</h2></div>
+      <div class="summary-grid">
+        <div class="summary-item"><div class="summary-label">Car Price (dealer)</div><div class="summary-val">${fmt(carPrice)}</div></div>
+        <div class="summary-item"><div class="summary-label">Total Price (incl. add-ons)</div><div class="summary-val">${fmt(totalPrice)}</div></div>
+        <div class="summary-item"><div class="summary-label">Deposit</div><div class="summary-val">${fmt(deposit)}</div></div>
+        <div class="summary-item"><div class="summary-label">Loan Amount</div><div class="summary-val">${fmt(loanAmount)}</div></div>
+        <div class="summary-item"><div class="summary-label">Interest Rate</div><div class="summary-val">${annualRate}% p.a.</div></div>
+        <div class="summary-item"><div class="summary-label">Term</div><div class="summary-val">${termYears} yrs / ${totalWeeks} wks</div></div>
+        <div class="summary-item"><div class="summary-label">GFV (${gfvPct}% of car price)</div><div class="summary-val">${fmt(gfv)}</div></div>
+        <div class="summary-item"><div class="summary-label">Milam Balloon (10% car price)</div><div class="summary-val">${fmt(milamBalloon)}</div></div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="result-section" id="sec2">
+      <div class="section-header"><span class="dot"></span><h2>Loan Comparison</h2></div>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>GFV Loan</th>
+            <th>Standard Loan</th>
+            <th class="milam-col">Milam Soft End</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Weekly repayment</td>
+            <td>${fmt(gfvWeekly)}</td>
+            <td>${fmt(stdWeekly)}</td>
+            <td class="milam-val">${fmt(milamWeekly)}</td>
+          </tr>
+          <tr>
+            <td>Total weekly paid</td>
+            <td>${fmt(gfvTotalWeekly)}</td>
+            <td>${fmt(stdTotalWeekly)}</td>
+            <td class="milam-val">${fmt(milamTotalWeekly)}</td>
+          </tr>
+          <tr>
+            <td>Balloon payment</td>
+            <td>${fmtN(gfv)}</td>
+            <td>$0.00</td>
+            <td class="milam-val">${fmt(milamBalloon)}</td>
+          </tr>
+          <tr>
+            <td>Total paid</td>
+            <td>${fmt(gfvTotalPaid)}</td>
+            <td>${fmt(stdTotalPaid)}</td>
+            <td class="milam-val">${fmt(milamTotalPaid)}</td>
+          </tr>
+          <tr>
+            <td>vs GFV Loan</td>
+            <td>$0.00 <span class="badge-lower">baseline</span></td>
+            <td>${fmt(Math.abs(stdTotalPaid - gfvTotalPaid))} <span class="${stdTotalPaid < gfvTotalPaid ? 'badge-lower' : 'badge-higher'}">${stdTotalPaid < gfvTotalPaid ? 'cheaper' : '+higher'}</span></td>
+            <td class="milam-val">${fmt(Math.abs(milamTotalPaid - gfvTotalPaid))} <span class="${milamTotalPaid < gfvTotalPaid ? 'badge-lower' : 'badge-higher'}">${milamTotalPaid < gfvTotalPaid ? 'cheaper' : '+higher'}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Milam Outputs -->
+    <div class="result-section" id="sec3">
+      <div class="section-header"><span class="dot"></span><h2>Milam End-of-Term Outputs</h2></div>
+      <div class="payout-grid">
+        <div class="payout-card">
+          <div class="payout-label">Milam Equity Payout</div>
+          <div class="payout-value accent2">${fmt(milamEquityPayout)}</div>
+          <div class="payout-sub">(GFV − Milam balloon) + (Milam total − Standard total) — paid back to customer if they hand car back</div>
+        </div>
+        <div class="payout-card">
+          <div class="payout-label">Milam GFV</div>
+          <div class="payout-value accent">${fmt(milamGFV)}</div>
+          <div class="payout-sub">Equity payout + Milam balloon — total residual Milam holds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two scenarios -->
+    <div class="result-section" id="sec4">
+      <div class="section-header"><span class="dot"></span><h2>End-of-Term Choice — Net Cost to Customer</h2></div>
+      <div class="payout-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="payout-card">
+          <div class="payout-label">A · Hand Car Back</div>
+          <div class="payout-value accent2">${fmt(milamHandBackNet)}</div>
+          <div class="payout-sub">Weekly paid (${fmt(milamTotalWeekly)}) − equity payout (${fmt(milamEquityPayout)}). No balloon, walk away clean.</div>
+        </div>
+        <div class="payout-card">
+          <div class="payout-label">B · Keep Car (pay balloon)</div>
+          <div class="payout-value" style="color:var(--text)">${fmt(milamKeepCarNet)}</div>
+          <div class="payout-sub">Total paid (${fmt(milamTotalPaid)}) − car value worth GFV (${fmt(gfv)}). You own a car worth ~${fmt(gfv)}.</div>
+        </div>
+      </div>
+      <div style="padding: 24px; border-top: 1px solid var(--border); background: rgba(200,245,66,0.03);">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+          <div>
+            <div class="payout-label" style="margin-bottom:8px;">Standard Loan Net Cost</div>
+            <div style="font-family:'Syne',sans-serif; font-size:24px; font-weight:700; color:var(--muted);">${fmt(stdNetCost)}</div>
+            <div class="payout-sub" style="margin-top:6px;">Total paid (${fmt(stdTotalPaid)}) − car owned worth GFV (${fmt(gfv)})</div>
+          </div>
+          <div>
+            <div class="payout-label" style="margin-bottom:8px;">The Verdict</div>
+            <div style="font-family:'DM Mono',monospace; font-size:13px; line-height:1.6; color:var(--text);">
+              Hand back = <span style="color:var(--accent2)">identical</span> to standard loan net cost.<br>
+              Keep car = <span style="color:var(--accent)">${fmt(milamPremium)}</span> premium — the price of optionality.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Stagger animations
+  ['sec1','sec2','sec3','sec4'].forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id)?.classList.add('visible');
+    }, i * 120);
+  });
+}
+
+// Auto-calculate on load
+window.addEventListener('load', calculate);
+
+// Live recalc on Enter
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') calculate();
+});
+</script>
+</body>
+</html>
